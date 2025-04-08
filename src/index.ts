@@ -1,18 +1,22 @@
-import { showReviewTotal, populateUser } from "./utils";
+import {
+  showReviewTotal,
+  populateUser,
+  showDetails,
+  getTopTwoReviews,
+  makeMultiple,
+} from "./utils";
 import { Permissions, LoyaltyUser } from "./enums";
-import { Price, Country } from "./aliases.ts";
+import { Review, Property } from "./interfaces.ts";
 
 const propertyContainer = document.querySelector(".properties");
+const reviewContainer = document.querySelector(".reviews");
+const container = document.querySelector(".container");
+const button = document.querySelector("button");
 const footer = document.querySelector(".footer");
 
 let isLoggedIn: boolean;
 
-const reviews: {
-  name: string;
-  stars: number;
-  loyaltyUser: LoyaltyUser;
-  date: string;
-}[] = [
+const reviews: Review[] = [
   {
     name: "Sheia",
     stars: 5,
@@ -42,17 +46,7 @@ const you = {
   stayedAt: ["florida-home", "oman-flat", "tokyo-bungalow"],
 };
 
-const properties: {
-  image: string;
-  title: string;
-  pricePerNight: number;
-  address: string;
-  townCity: string;
-  postCode: number;
-  country: Country;
-  contactDetails: [number, string];
-  availableToRent: boolean;
-}[] = [
+const properties: Property[] = [
   {
     image: "../images/download.jpeg",
     title: "Mansion",
@@ -86,26 +80,23 @@ const properties: {
     contactDetails: [+27876589, "freddyfreak@candycane.com"],
     availableToRent: true,
   },
+  {
+    image: "../images/karoo.webp",
+    title: "Karoo",
+    pricePerNight: 300,
+    address: "6 N1 rd",
+    townCity: "karoo",
+    postCode: 7677,
+    country: "South Africa",
+    contactDetails: [+27876589, "karoogirt@yahoo.com"],
+    availableToRent: true,
+  },
 ];
 
 showReviewTotal(reviews.length, reviews[0].name, reviews[0].loyaltyUser);
 populateUser(you.isReturning, you.firstName);
 
-let authorityStatus: any;
-
 isLoggedIn = true;
-
-function showDetails(
-  authorityStatus: boolean | Permissions,
-  element: HTMLDivElement,
-  pricePerNight: number
-) {
-  if (authorityStatus) {
-    const priceDisplay = document.createElement("div");
-    priceDisplay.innerHTML = `R${pricePerNight.toString()} per night`;
-    element.appendChild(priceDisplay);
-  }
-}
 
 properties.forEach((property) => {
   const card = document.createElement("div");
@@ -115,9 +106,51 @@ properties.forEach((property) => {
   image.classList.add("image");
   image.setAttribute("src", property.image);
   card.appendChild(image);
-  propertyContainer.appendChild(card);
   showDetails(isLoggedIn, card, property.pricePerNight);
+  propertyContainer.appendChild(card);
 });
+
+let count = 0;
+function addReviews(array: Review[]): void {
+  if (!count) {
+    count++;
+    const topTwo = getTopTwoReviews(array);
+    for (let i = 0; i < topTwo.length; i++) {
+      const card = document.createElement("div");
+      card.classList.add("review-card");
+      card.innerHTML = topTwo[i].stars + " stars from " + topTwo[i].name;
+      reviewContainer.appendChild(card);
+    }
+    container.removeChild(button);
+  }
+}
+
+button.addEventListener("click", () => addReviews(reviews));
 
 let currentLocation: [string, string, number] = ["Cape Town", "9:20", 20];
 footer.innerHTML = `${currentLocation[0]} its ${currentLocation[1]} in the morning and ${currentLocation[2]}C°`;
+
+class MainProperty {
+  src: string;
+  title: string;
+  reviews: Review[];
+  constructor(src: string, title: string, reviews: Review[]) {
+    this.src = src;
+    this.title = title;
+    this.reviews = reviews;
+  }
+}
+
+let yourMainProperty = new MainProperty("../images/main.jpeg", "Cape Town House", [
+  {
+    name: "Olive",
+    stars: 5,
+    loyaltyUser: LoyaltyUser.GOLD_USER,
+    date: "12-04-2021",
+  },
+]);
+
+const mainImageContainer = document.querySelector(".main-image");
+const image = document.createElement("img");
+image.setAttribute("src", yourMainProperty.src);
+mainImageContainer.appendChild(image);
